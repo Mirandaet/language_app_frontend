@@ -9,17 +9,16 @@ const LanguagesStore = create((set) => ({
         method: "GET",
       });
       if (!response.ok) {
-        console.log("Fail");
-        throw new Error("Failed to fetch languages");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       const result = await response.json();
-      set({ languages: result });
-      set({language: result[0]});
+      set({ languages: result, language: result[0] });
     } catch (error) {
       console.error("Error fetching languages", error);
+      set({ languages: ["English"] }); // Fallback to English if fetch fails
     }
   },
-  setLanguage: (language) => set({ language}), 
+  setLanguage: (language) => set({ language }),
 }));
 
 export default LanguagesStore;

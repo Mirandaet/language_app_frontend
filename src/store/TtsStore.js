@@ -2,7 +2,10 @@ import { create } from "zustand";
 import axios from "axios";
 
 const TtsStore = create((set) => ({
+  isLoading: false,
+  error: null,
   synthesizeSpeech: async (textToSynthesize, language) => {
+    set({ isLoading: true, error: null });
     try {
       const formData = new FormData();
       formData.append("text", textToSynthesize);
@@ -11,10 +14,12 @@ const TtsStore = create((set) => ({
         responseType: "blob",
       });
       const audioUrl = URL.createObjectURL(response.data);
+      set({ isLoading: false });
       return audioUrl;
     } catch (error) {
       console.error("Error synthesizing speech", error);
-      return null; // Return null in case of error
+      set({ isLoading: false, error: error.message || "Failed to synthesize speech" });
+      return null;
     }
   },
 }));

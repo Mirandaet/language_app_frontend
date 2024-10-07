@@ -5,7 +5,6 @@ const GenerateResponseStore = create((set, get) => ({
   responseText: "",
   generateResponse: async (language) => {
     try {
-      // Access the conversationHistory state using get()
       const conversationHistory = get().conversationHistory;
 
       const response = await fetch("http://127.0.0.1:8000/generate", {
@@ -19,18 +18,30 @@ const GenerateResponseStore = create((set, get) => ({
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
+      const aiResponse = result.response; // Assuming the backend returns {response: "..."}
+
       set({
         conversationHistory: [
           ...conversationHistory,
-          { role: "AI", message: result },
+          { role: "AI", content: aiResponse },
         ],
-        responseText: result, // Combine setting both states into one set call
+        responseText: aiResponse,
       });
     } catch (error) {
       console.error("Error fetching response", error);
     }
   },
+  addUserMessage: (message) => set(state => ({
+    conversationHistory: [
+      ...state.conversationHistory,
+      { role: "USER", content: message }
+    ]
+  })),
   setConversationHistory: (conversationHistory) => set({ conversationHistory }),
 }));
 

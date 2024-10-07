@@ -2,7 +2,8 @@ import { create } from "zustand";
 
 const AudioStore = create((set) => ({
   audioURLs: [],
-  setAudioURLs: (URLs) => set({ URLs}), 
+  addAudioURL: (url) => set((state) => ({ audioURLs: [...state.audioURLs, url] })),
+  clearAudioURLs: () => set({ audioURLs: [] }),
 }));
 
 export default AudioStore;
