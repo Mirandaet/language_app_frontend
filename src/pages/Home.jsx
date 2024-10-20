@@ -10,12 +10,11 @@ function Home() {
   // const [conversationHistory, setConversationHistory] = useState([]);
   const {languages, fetchLanguages, language, setLanguage} = LanguagesStore();
   const {generateResponse, conversationHistory, setConversationHistory, responseText} = GenerateResponseStore();
-
   useEffect(() => {
     if (transcription != "") {
       setConversationHistory([
         ...conversationHistory,
-        { role: "USER", message: transcription },
+        { role: "USER", content: transcription },
       ]);
     }
   }, [transcription]);

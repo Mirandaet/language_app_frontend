@@ -13,7 +13,9 @@ const GenerateResponseStore = create((set, get) => ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          chat_history: conversationHistory,
+          user_id: 1, // Replace with actual user ID
+          conversation_id: 1, // Replace with actual conversation ID
+          message: conversationHistory[conversationHistory.length - 1].content,
           language: language,
         }),
       });
@@ -23,8 +25,23 @@ const GenerateResponseStore = create((set, get) => ({
       }
 
       const result = await response.json();
-      const aiResponse = result.response; // Assuming the backend returns {response: "..."}
+      let aiResponse = result.response; // Assuming the backend returns {response: "..."}
 
+      // Language-specific responses
+      const languageResponses = {
+        English: "Okay, I will switch to English.",
+        Spanish: "De acuerdo, cambiaré al español.",
+        French: "D'accord, je vais passer au français.",
+        Chinese: "好的，我会切换到中文。",
+        Japanese: "はい、日本語に切り替えます。",
+        Korean: "네, 한국어로 전환하겠습니다.",
+      };
+
+      if (languageResponses[aiResponse] !== undefined) {
+        aiResponse =
+          languageResponses[aiResponse] ||
+          `Okay, I will switch to ${language}.`;
+      }
       set({
         conversationHistory: [
           ...conversationHistory,
@@ -36,12 +53,13 @@ const GenerateResponseStore = create((set, get) => ({
       console.error("Error fetching response", error);
     }
   },
-  addUserMessage: (message) => set(state => ({
-    conversationHistory: [
-      ...state.conversationHistory,
-      { role: "USER", content: message }
-    ]
-  })),
+  addUserMessage: (message) =>
+    set((state) => ({
+      conversationHistory: [
+        ...state.conversationHistory,
+        { role: "USER", content: message },
+      ],
+    })),
   setConversationHistory: (conversationHistory) => set({ conversationHistory }),
 }));
 

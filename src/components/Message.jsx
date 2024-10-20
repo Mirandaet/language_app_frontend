@@ -2,49 +2,57 @@ import React, { useState, useEffect, useRef } from "react";
 import TextToSpeech from "./TextToSpeach";
 import GenerateResponseStore from "../store/GenerateResponseStore";
 import AudioStore from "../store/AudioStore";
+import LanguagesStore from "../store/LanguagesStore"; // Import LanguagesStore
 
-function Message({
-  message,
-  index,}) {
+function Message({ message, index }) {
   const { conversationHistory, setConversationHistory } = GenerateResponseStore();
-  const {audioURLs} = AudioStore();
+  const { audioURLs } = AudioStore();
+  const { language } = LanguagesStore(); // Get current language
   const [isEditable, setIsEditable] = useState(false);
-  const [inputValue, setInputValue] = useState(message["message"]);
+  const [inputValue, setInputValue] = useState(message["content"]);
   const textareaRef = useRef(null);
-  const {responseText} = GenerateResponseStore();
+  const audioRef = useRef(null);
+  const { responseText } = GenerateResponseStore();
 
   // Function to adjust textarea height based on content
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = "auto"; // Reset height to auto
-      textarea.style.height = `${textarea.scrollHeight}px`; // Set height based on scroll height
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
   };
 
   useEffect(() => {
-    adjustTextareaHeight(); // Adjust height on component mount
+    adjustTextareaHeight();
   }, []);
 
   useEffect(() => {
     if (!isEditable) {
-      adjustTextareaHeight(); // Adjust height when editing is toggled off
+      adjustTextareaHeight();
     }
   }, [isEditable]);
 
+  // Effect to pause audio when language changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+  }, [language]);
+
   const handleButtonClick = () => {
     if (isEditable) {
-      const updatedHistory = [conversationHistory[0,index]];
-      updatedHistory[index] = { ...message, message: inputValue };
+      const updatedHistory = [...conversationHistory];
+      updatedHistory[index] = { ...message, content: inputValue };
       setConversationHistory(updatedHistory);
-      console.log(conversationHistory)
     }
     setIsEditable(!isEditable);
   };
 
   const handleInputChange = (event) => {
     setInputValue(event.target.value);
-    adjustTextareaHeight(); // Adjust height as user types
+    adjustTextareaHeight();
   };
 
   return (
@@ -59,24 +67,25 @@ function Message({
           className="p-2 bg-blue-200 rounded-lg w-full resize-none overflow-hidden"
           onChange={handleInputChange}
           disabled={!isEditable}
-          rows={1} // Start with a single row
-          style={{ minHeight: "2rem" }} // Minimum height
+          rows={1}
+          style={{ minHeight: "2rem" }}
         />
 
         <div className="flex gap-4 justify-end w-full px-4">
           {message["role"] === "USER" ? (
             <audio
+              ref={audioRef}
               className="rounded-lg w-12"
               src={audioURLs[index - Math.floor(index / 2)]}
               controls
             ></audio>
           ) : index === conversationHistory.length - 1 ? (
             <TextToSpeech
-              text={message["message"]}
+              text={message["content"]}
               responseText={responseText}
             />
           ) : (
-            <TextToSpeech text={message["message"]} />
+            <TextToSpeech text={message["content"]} />
           )}
           <button onClick={handleButtonClick}>
             {isEditable ? "Submit" : "Edit"}

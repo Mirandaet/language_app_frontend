@@ -6,19 +6,24 @@ import AudioStore from '../store/AudioStore';
 const TextToSpeech = ({ text, responseText }) => {
   const { language } = LanguagesStore();
   const { synthesizeSpeech } = TtsStore();
-  const {audioURLs, setAudioURLs} = AudioStore();
+  const { audioURLs, addAudioURL } = AudioStore();
   const [ttsText, setTtsText] = useState(text || '');
   const [ttsAudioURL, setTtsAudioURL] = useState('');
   const audioRef = useRef(null);
+  const lastProcessedResponseRef = useRef('');
 
   useEffect(() => {
     const ttsFunction = async () => {
       try {
-        setTtsText(responseText);
-        const audioURL = await synthesizeSpeech(responseText, language);
-        if (audioURL) {
-          setTtsAudioURL(audioURL);
-          setAudioURLs([...audioURLs, audioURL]);
+        // Only process if it's a new response
+        if (responseText && responseText !== lastProcessedResponseRef.current) {
+          setTtsText(responseText);
+          const audioURL = await synthesizeSpeech(responseText, language);
+          if (audioURL) {
+            setTtsAudioURL(audioURL);
+            addAudioURL([...audioURLs, audioURL]);
+          }
+          lastProcessedResponseRef.current = responseText;
         }
       } catch (error) {
         console.error('Error during TTS synthesis:', error);
